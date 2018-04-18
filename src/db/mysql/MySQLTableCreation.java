@@ -14,8 +14,8 @@ public class MySQLTableCreation {
 			// Step 1 Connect to MySQL.
 			try {
 				System.out.println("Connecting to " + MySQLDBUtil.URL);
-				Class.forName("com.mysql.jdbc.Driver").getConstructor().newInstance();
-				conn = DriverManager.getConnection(MySQLDBUtil.URL);
+				Class.forName("com.mysql.jdbc.Driver").getConstructor().newInstance(); // add driver to registedDrivers
+				conn = DriverManager.getConnection(MySQLDBUtil.URL); // search registedDrivers to get connection
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
