@@ -10,3 +10,4 @@ public class MySQLDBUtil {
 	      + "?user=" + USERNAME + "&password=" + PASSWORD + "&autoReconnect=true";
 	}
 
+
