@@ -12,8 +12,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import db.DBConnection;
+import db.DBConnectionFactory;
 import entity.Item;
-import external.TicketMasterAPI;
 
 /**
  * Servlet implementation class SearchItem
@@ -40,8 +41,11 @@ public class SearchItem extends HttpServlet {
 		
 		// term may be empty
 		String keyword = request.getParameter("term");
-		TicketMasterAPI tmAPI = new TicketMasterAPI();
-		List<Item> items = tmAPI.search(lat, lon, keyword);		
+
+		DBConnection connenction = DBConnectionFactory.getConnection();
+		List<Item> items = connenction.searchItems(lat, lon, keyword);
+        connenction.close(); 
+		
 		
 		JSONArray array = new JSONArray();
 		try {

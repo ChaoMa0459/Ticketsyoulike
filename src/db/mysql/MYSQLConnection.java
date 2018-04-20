@@ -12,10 +12,10 @@ import db.DBConnection;
 import entity.Item;
 import external.TicketMasterAPI;
 
-public class MYSQLConnection implements DBConnection {
+public class MySQLConnection implements DBConnection {
 	private Connection conn;
 
-	public MYSQLConnection() {
+	public MySQLConnection() {
 		try {
 			Class.forName("com.mysql.jdbc.Driver").getConstructor().newInstance();
 			conn = DriverManager.getConnection(MySQLDBUtil.URL);
@@ -78,7 +78,35 @@ public class MYSQLConnection implements DBConnection {
 
 	@Override
 	public void saveItem(Item item) {
-		// TODO Auto-generated method stub
+		if (conn == null) {
+			return;
+		}
+		try {
+			// first, insert into items table
+			// ? is used to protect from SQL Injection
+			String sql = "INSERT IGNORE INTO items VALUES (?,?,?,?,?,?,?)"; // when meet duplication, ignore so that no exception will be throw
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, item.getItemId());
+			statement.setString(2, item.getName());
+			statement.setDouble(3, item.getRating());
+			statement.setString(4, item.getAddress());
+			statement.setString(5, item.getImageUrl());
+			statement.setString(6, item.getUrl());
+			statement.setDouble(7, item.getDistance());
+			statement.executeUpdate();
+			
+			// second, update categories table for each category
+			sql = "INSERT IGNORE INTO categories VALUES (?,?)";
+			for (String category : item.getCategories()) {
+				statement = conn.prepareStatement(sql);
+				statement.setString(1, item.getItemId());
+				statement.setString(2, category);
+				statement.executeUpdate();
+			}
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		
 	}
 
