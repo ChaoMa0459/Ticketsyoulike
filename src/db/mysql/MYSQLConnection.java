@@ -11,6 +11,7 @@ import java.util.Set;
 
 import db.DBConnection;
 import entity.Item;
+import entity.Item.ItemBuilder;
 import external.TicketMasterAPI;
 
 public class MySQLConnection implements DBConnection {
@@ -36,7 +37,6 @@ public class MySQLConnection implements DBConnection {
 		}
 	}
 
-
 	@Override
 	public void setFavoriteItems(String userId, List<String> itemIds) {
 		if (conn == null) {
@@ -49,7 +49,7 @@ public class MySQLConnection implements DBConnection {
 				statement.setString(1, userId);
 				statement.setString(2, itemId);
 				statement.executeUpdate();
-			}		
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -62,17 +62,17 @@ public class MySQLConnection implements DBConnection {
 		if (conn == null) {
 			return;
 		}
-	              String sql = "DELETE FROM history WHERE user_id = ? AND item_id = ?";
-	              try {
-	            	  PreparedStatement statement = conn.prepareStatement(sql);
-	            	  for (String itemId : itemIds) {
-	            		  statement.setString(1, userId);
-	            		  statement.setString(2, itemId);
-	            		  statement.executeUpdate();
-	            	  }
-	              } catch (SQLException e) {
-	                      e.printStackTrace();
-	              }
+		String sql = "DELETE FROM history WHERE user_id = ? AND item_id = ?";
+		try {
+			PreparedStatement statement = conn.prepareStatement(sql);
+			for (String itemId : itemIds) {
+				statement.setString(1, userId);
+				statement.setString(2, itemId);
+				statement.executeUpdate();
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -86,7 +86,7 @@ public class MySQLConnection implements DBConnection {
 		try {
 			PreparedStatement statement = conn.prepareStatement(sql);
 			statement.setString(1, userId);
-			
+
 			ResultSet rs = statement.executeQuery();
 			while (rs.next()) {
 				itemIds.add(rs.getString("item_id"));
@@ -103,20 +103,35 @@ public class MySQLConnection implements DBConnection {
 		if (conn == null) {
 			return items;
 		}
-		String sql = "";
+		Set<String> itemIds = getFavoriteItemIds(userId);
+		String sql = "SELECT * FROM items WHERE item_id = ?";
+
 		try {
-			PreparedStatement statement = conn.prepareStatement(sql);
-			statement.setString(1, userId);
-			
-			ResultSet rs = statement.executeQuery();
-			while (rs.next()) {
-				// items.add(rs.getString("item_id"));
+			for (String itemId : itemIds) {
+				PreparedStatement statement = conn.prepareStatement(sql);
+				statement.setString(1, itemId);
+				ResultSet rs = statement.executeQuery();
+
+				while (rs.next()) {
+					ItemBuilder builder = new ItemBuilder();
+					builder.setItemId(rs.getString("item_id"));
+					builder.setName(rs.getString("name"));
+					builder.setRating(rs.getDouble("rating"));
+					builder.setAddress(rs.getString("address"));
+					builder.setImageUrl(rs.getString("image_url"));
+					builder.setUrl(rs.getString("url"));
+					builder.setDistance(rs.getDouble("distance"));
+					builder.setCategories(getCategories(itemId));
+
+					items.add(builder.build());
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 		return items;
+
 	}
 
 	@Override
@@ -129,18 +144,18 @@ public class MySQLConnection implements DBConnection {
 		try {
 			PreparedStatement statement = conn.prepareStatement(sql);
 			statement.setString(1, itemId);
-			
+
 			ResultSet rs = statement.executeQuery();
 			while (rs.next()) {
 				categories.add(rs.getString("category"));
 			}
-			
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return categories;
 	}
+
 	@Override
 	public List<Item> searchItems(double lat, double lon, String term) {
 		TicketMasterAPI tmAPI = new TicketMasterAPI();
@@ -159,7 +174,8 @@ public class MySQLConnection implements DBConnection {
 		try {
 			// first, insert into items table
 			// ? is used to protect from SQL Injection
-			String sql = "INSERT IGNORE INTO items VALUES (?,?,?,?,?,?,?)"; // when meet duplication, ignore so that no exception will be throw
+			String sql = "INSERT IGNORE INTO items VALUES (?,?,?,?,?,?,?)"; // when meet duplication, ignore so that no
+																			// exception will be throw
 			PreparedStatement statement = conn.prepareStatement(sql);
 			statement.setString(1, item.getItemId());
 			statement.setString(2, item.getName());
@@ -169,7 +185,7 @@ public class MySQLConnection implements DBConnection {
 			statement.setString(6, item.getUrl());
 			statement.setDouble(7, item.getDistance());
 			statement.executeUpdate();
-			
+
 			// second, update categories table for each category
 			sql = "INSERT IGNORE INTO categories VALUES (?,?)";
 			for (String category : item.getCategories()) {
@@ -178,11 +194,11 @@ public class MySQLConnection implements DBConnection {
 				statement.setString(2, category);
 				statement.executeUpdate();
 			}
-			
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	@Override
