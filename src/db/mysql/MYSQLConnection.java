@@ -3,8 +3,9 @@ package db.mysql;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,21 +39,20 @@ public class MySQLConnection implements DBConnection {
 
 	@Override
 	public void setFavoriteItems(String userId, List<String> itemIds) {
-		// TODO Auto-generated method stub
 		if (conn == null) {
 			return;
 		}
-	              String sql = "INSERT INGMORE INTO history (user_id, item_id) VALUES (?,?)";
-	              try {
-	            	  PreparedStatement statement = conn.prepareStatement(sql);
-	            	  for (String itemId : itemIds) {
-	            		  statement.setString(1, userId);
-	            		  statement.setString(2, itemId);
-	            		  statement.executeUpdate();
-	            	  }
-	              } catch (SQLException e) {
-	                      e.printStackTrace();
-	              }
+		String sql = "INSERT IGNORE INTO history (user_id, item_id) VALUES (?,?)";
+		try {
+			for (String itemId : itemIds) {
+				PreparedStatement statement = conn.prepareStatement(sql);
+				statement.setString(1, userId);
+				statement.setString(2, itemId);
+				statement.executeUpdate();
+			}		
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -78,22 +78,69 @@ public class MySQLConnection implements DBConnection {
 
 	@Override
 	public Set<String> getFavoriteItemIds(String userId) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<String> itemIds = new HashSet<>();
+		if (conn == null) {
+			return itemIds;
+		}
+		String sql = "SELECT item_id FROM history WHERE user_id = ?";
+		try {
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, userId);
+			
+			ResultSet rs = statement.executeQuery();
+			while (rs.next()) {
+				itemIds.add(rs.getString("item_id"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return itemIds;
 	}
 
 	@Override
 	public Set<Item> getFavoriteItems(String userId) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<Item> items = new HashSet<>();
+		if (conn == null) {
+			return items;
+		}
+		String sql = "";
+		try {
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, userId);
+			
+			ResultSet rs = statement.executeQuery();
+			while (rs.next()) {
+				// items.add(rs.getString("item_id"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return items;
 	}
 
 	@Override
 	public Set<String> getCategories(String itemId) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<String> categories = new HashSet<>();
+		if (conn == null) {
+			return categories;
+		}
+		String sql = "SELECT category FROM categories WHERE item_id = ?";
+		try {
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, itemId);
+			
+			ResultSet rs = statement.executeQuery();
+			while (rs.next()) {
+				categories.add(rs.getString("category"));
+			}
+			
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return categories;
 	}
-
 	@Override
 	public List<Item> searchItems(double lat, double lon, String term) {
 		TicketMasterAPI tmAPI = new TicketMasterAPI();
