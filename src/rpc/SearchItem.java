@@ -35,34 +35,34 @@ public class SearchItem extends HttpServlet {
 	/**
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		// get parameters from front-end
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		String userId = request.getParameter("user_id");
 		double lat = Double.parseDouble(request.getParameter("lat"));
 		double lon = Double.parseDouble(request.getParameter("lon"));
-		
-		// term may be empty
+		// Term can be empty or null.
 		String keyword = request.getParameter("term");
 
-		DBConnection connenction = DBConnectionFactory.getConnection();
-		List<Item> items = connenction.searchItems(lat, lon, keyword);		
-		Set<String> favorite = connenction.getFavoriteItemIds(userId);
-        connenction.close(); 
-		
+		DBConnection connection = DBConnectionFactory.getConnection();
+		List<Item> items = connection.searchItems(lat, lon, keyword);
+
+		Set<String> favorite = connection.getFavoriteItemIds(userId);
+
+                             connection.close(); 
 		JSONArray array = new JSONArray();
+
 		try {
-			for (Item item: items) {
+			for (Item item : items) {
 				JSONObject obj = item.toJSONObject();
-				// Check if this is a favorite one.
-				// This field is required by frontend to correctly display favorite items.
 				obj.put("favorite", favorite.contains(item.getItemId()));
 				array.put(obj);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		RpcHelper.writeJsonArray(response, array); // put printWriter into helper function
+		RpcHelper.writeJsonArray(response, array);
 	}
+
 
 	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)

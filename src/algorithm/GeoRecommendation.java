@@ -22,21 +22,21 @@ public class GeoRecommendation {
 		DBConnection conn = DBConnectionFactory.getConnection();
 
 		// Step 1 Get all favorited itemIds
-		Set<String> favoriteItemIds = conn.getFavoriteItemIds(userId);
-		
+		Set<String> favoritedItemIds = conn.getFavoriteItemIds(userId);
+
 		// Step 2 Get all categories of favorited items
 		Map<String, Integer> allCategories = new HashMap<>();
-		for (String itemId : favoriteItemIds) {
+		for (String itemId : favoritedItemIds) {
 			Set<String> categories = conn.getCategories(itemId);
 			for (String category : categories) {
-				if (!allCategories.containsKey(category)) {
-					allCategories.put(category, 0);
+				if (allCategories.containsKey(category)) {
+					allCategories.put(category, allCategories.get(category) + 1);
+				} else {
+					allCategories.put(category, 1);
 				}
-				allCategories.put(category, allCategories.get(category) + 1);
 			}
 		}
-		
-		// sort it
+
 		List<Entry<String, Integer>> categoryList = new ArrayList<>(allCategories.entrySet());
 		Collections.sort(categoryList, new Comparator<Entry<String, Integer>>() {
 			@Override
@@ -45,20 +45,21 @@ public class GeoRecommendation {
 			}
 		});
 
-		// Step 3 Do search based on category, filer out favorited items, sort by distance
+		// Step 3 Do search based on catgory, filter out favorited items, sort by
+		// distance
 		Set<String> visitedItemIds = new HashSet<>();
 		for (Entry<String, Integer> entry : categoryList) {
 			List<Item> items = conn.searchItems(lat, lon, entry.getKey());
 			List<Item> filteredItems = new ArrayList<>();
 
 			for (Item item : items) {
-				if (!visitedItemIds.contains(item.getItemId()) && !favoriteItemIds.contains(item.getItemId())) {
+				if (!visitedItemIds.contains(item.getItemId()) && !favoritedItemIds.contains(item.getItemId())) {
 					filteredItems.add(item);
 					visitedItemIds.add(item.getItemId());
 				}
 			}
 
-			Collections.sort(items, new Comparator<Item>() {
+			Collections.sort(filteredItems, new Comparator<Item>() {
 				@Override
 				public int compare(Item o1, Item o2) {
 					return Double.compare(o1.getDistance(), o2.getDistance());
@@ -70,8 +71,6 @@ public class GeoRecommendation {
 
 		conn.close();
 		return recommendedItems;
+  }
 
-	}
-	
-	
 }

@@ -86,7 +86,7 @@ public class MySQLConnection implements DBConnection {
 		try {
 			PreparedStatement statement = conn.prepareStatement(sql);
 			statement.setString(1, userId);
-
+			
 			ResultSet rs = statement.executeQuery();
 			while (rs.next()) {
 				itemIds.add(rs.getString("item_id"));
@@ -96,6 +96,7 @@ public class MySQLConnection implements DBConnection {
 		}
 		return itemIds;
 	}
+
 
 	@Override
 	public Set<Item> getFavoriteItems(String userId) {
@@ -112,7 +113,9 @@ public class MySQLConnection implements DBConnection {
 				statement.setString(1, itemId);
 				ResultSet rs = statement.executeQuery();
 
-				while (rs.next()) {
+                                                         // [ {“name”: “abcd”, “rating”: 0, “address”:”abcd”, ...},  ]
+				
+				while(rs.next()) {
 					ItemBuilder builder = new ItemBuilder();
 					builder.setItemId(rs.getString("item_id"));
 					builder.setName(rs.getString("name"));
@@ -122,17 +125,17 @@ public class MySQLConnection implements DBConnection {
 					builder.setUrl(rs.getString("url"));
 					builder.setDistance(rs.getDouble("distance"));
 					builder.setCategories(getCategories(itemId));
-
+					
 					items.add(builder.build());
 				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
+		
 		return items;
-
 	}
+
 
 	@Override
 	public Set<String> getCategories(String itemId) {
@@ -149,12 +152,12 @@ public class MySQLConnection implements DBConnection {
 			while (rs.next()) {
 				categories.add(rs.getString("category"));
 			}
-
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 		return categories;
 	}
+
 
 	@Override
 	public List<Item> searchItems(double lat, double lon, String term) {
