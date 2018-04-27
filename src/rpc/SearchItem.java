@@ -2,6 +2,7 @@ package rpc;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -36,6 +37,7 @@ public class SearchItem extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// get parameters from front-end
+		String userId = request.getParameter("user_id");
 		double lat = Double.parseDouble(request.getParameter("lat"));
 		double lon = Double.parseDouble(request.getParameter("lon"));
 		
@@ -43,14 +45,17 @@ public class SearchItem extends HttpServlet {
 		String keyword = request.getParameter("term");
 
 		DBConnection connenction = DBConnectionFactory.getConnection();
-		List<Item> items = connenction.searchItems(lat, lon, keyword);
+		List<Item> items = connenction.searchItems(lat, lon, keyword);		
+		Set<String> favorite = connenction.getFavoriteItemIds(userId);
         connenction.close(); 
-		
 		
 		JSONArray array = new JSONArray();
 		try {
 			for (Item item: items) {
 				JSONObject obj = item.toJSONObject();
+				// Check if this is a favorite one.
+				// This field is required by frontend to correctly display favorite items.
+				obj.put("favorite", favorite.contains(item.getItemId()));
 				array.put(obj);
 			}
 		} catch (Exception e) {
