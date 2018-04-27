@@ -1,6 +1,7 @@
 package rpc;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,6 +12,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import algorithm.GeoRecommendation;
+import entity.Item;
 
 /**
  * Servlet implementation class RecommendItem
@@ -31,11 +35,19 @@ public class RecommendItem extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String userId = request.getParameter("user_id");
+		Double lat = Double.parseDouble(request.getParameter("lat"));
+		Double lon = Double.parseDouble(request.getParameter("lon"));
+
+		GeoRecommendation recommendation = new GeoRecommendation();
+		List<Item> recommendedItems = recommendation.recommendItems(userId, lat, lon);
+
 		JSONArray array = new JSONArray();
 		try {
-			array.put(new JSONObject().put("username", "abcd"));
-			array.put(new JSONObject().put("username", "1234"));
-		} catch (JSONException e) {
+			for (Item item : recommendedItems) {
+				array.put(item.toJSONObject());
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		RpcHelper.writeJsonArray(response, array);
